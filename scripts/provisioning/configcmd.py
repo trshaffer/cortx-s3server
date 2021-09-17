@@ -115,15 +115,11 @@ class ConfigCmd(SetupCmd):
       self.create_auth_jks_password()
       self.logger.info('create auth jks password completed')
 
-      if configure_only_openldap == True:
+      if skip_openldap == False:
         # Configure openldap only
-        self.configure_openldap()
-      elif configure_only_haproxy == True:
+        self.configure_s3_schema()
+      if skip_haproxy == False:
         # Configure haproxy only
-        self.configure_haproxy()
-      else:
-        # Configure both openldap and haproxy
-        self.configure_openldap()
         self.configure_haproxy()
 
       # create topic for background delete
@@ -170,6 +166,7 @@ class ConfigCmd(SetupCmd):
       raise S3PROVError(f"{confstore_key} does not specify endpoint fqdn {endpoint} for endpoint type {endpoint_type}")
     return endpoint[expected_token]
 
+<<<<<<< HEAD
   def configure_openldap(self):
     """Install and Configure Openldap over Non-SSL."""
     # 1. Install and Configure Openldap over Non-SSL.
@@ -228,11 +225,14 @@ class ConfigCmd(SetupCmd):
     storage_set_count = self.get_confvalue(self.get_confkey(
         'CONFIG>CONFSTORE_STORAGE_SET_COUNT_KEY').replace("cluster-id", self.cluster_id))
 
+  def configure_s3_schema(self):
+    self.logger.info('openldap s3 configuration started')
+    storage_set_count = self.get_confvalue(self.get_confkey(
+        'CONFIG>CONFSTORE_STORAGE_SET_COUNT_KEY').replace("cluster-id", self.cluster_id))
     index = 0
     while index < int(storage_set_count):
-      server_nodes_list = self.get_confkey(
-        'CONFIG>CONFSTORE_STORAGE_SET_SERVER_NODES_KEY').replace("cluster-id", self.cluster_id).replace("storage-set-count", str(index))
-      server_nodes_list = self.get_confvalue(server_nodes_list)
+      server_nodes_list_key = self.get_confkey('CONFSTORE_S3_OPENLDAP_SERVERS')
+      server_nodes_list = self.get_confvalue(server_nodes_list_key)
       if type(server_nodes_list) is str:
         # list is stored as string in the confstore file
         server_nodes_list = literal_eval(server_nodes_list)
@@ -263,9 +263,23 @@ class ConfigCmd(SetupCmd):
           raise S3PROVError(f"{cmd} failed with err: {stderr}, out: {stdout}, ret: {retcode}")
         else:
           self.logger.warning(f'warning of setupReplicationScript.sh: {stderr}')
-      index += 1
-    # TODO: set replication across storage-sets
-    self.logger.info('Open ldap replication configuration completed')
+		  for node_machine_id in server_nodes_list:
+			  cmd = ['/opt/seagate/cortx/s3/install/ldap/s3_setup_ldap.sh',
+					 '--hostname',
+					 f'{node_machine_id}',
+					 '--ldapadminpasswd',
+					 f'{self.ldap_passwd}',
+					 '--rootdnpasswd',
+					 f'{self.rootdn_passwd}']
+			  handler = SimpleProcess(cmd)
+			  stdout, stderr, retcode = handler.run()
+			  self.logger.info(f'output of setup_ldap.sh: {stdout}')
+			  if retcode != 0:
+				self.logger.error(f'error of setup_ldap.sh: {stderr} {host_name}')
+				raise S3PROVError(f"{cmd} failed with err: {stderr}, out: {stdout}, ret: {retcode}")
+			  else:
+				self.logger.warning(f'warning of setup_ldap.sh: {stderr} {host_name}')
+		  index += 1
 
   def create_topic(self, admin_id: str, topic_name:str, partitions: int):
     """create topic for background delete services."""
