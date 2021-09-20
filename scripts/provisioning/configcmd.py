@@ -115,7 +115,7 @@ class ConfigCmd(SetupCmd):
       self.create_auth_jks_password()
       self.logger.info('create auth jks password completed')
 
-      if skip_openldap == False:
+      if(self.services is None or 'openldap' in self.services):
         # Configure openldap only
         self.configure_s3_schema()
       if skip_haproxy == False:
@@ -139,6 +139,7 @@ class ConfigCmd(SetupCmd):
       self.logger.info("create background delete account completed")
     except Exception as e:
       raise S3PROVError(f'process() failed with exception: {e}')
+
 
   def get_endpoint(self, confstore_key, expected_token,  endpoint_type):
     """1.Fetch confstore value from given key i.e. confstore_key
