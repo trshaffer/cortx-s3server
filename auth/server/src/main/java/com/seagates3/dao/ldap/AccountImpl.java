@@ -210,13 +210,16 @@ public class AccountImpl implements AccountDAO {
                   LOGGER.debug("profileCreateDate value not found in ldap");
                 }
           }
+          lc.abandon(ldapResults);
         }
         catch (LDAPException ex) {
                 LOGGER.error("Failed to find details of account: " + name);
                 throw new DataAccessException(
                     "Failed to find account details.\n" + ex);
         }
-        finally { LdapConnectionManager.releaseConnection(lc); }
+        finally {
+          LdapConnectionManager.releaseConnection(lc);
+        }
 
         return account;
     }

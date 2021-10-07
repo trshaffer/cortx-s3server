@@ -96,6 +96,7 @@ public class RequestorImpl implements RequestorDAO {
 
                 String accountName = getAccountName(entry.getDN());
                 requestor.setAccount(getAccount(accountName));
+                lc.abandon(ldapResults);
             } else {
                 LOGGER.error("Failed to find access key details of userId: "
                         + accessKey.getUserId());
@@ -107,7 +108,9 @@ public class RequestorImpl implements RequestorDAO {
             catch (LDAPException ex) {
               throw new DataAccessException("LDAP error\n" + ex);
             }
-            finally { LdapConnectionManager.releaseConnection(lc); }
+            finally {
+              LdapConnectionManager.releaseConnection(lc);
+            }
         }
         return requestor;
     }
