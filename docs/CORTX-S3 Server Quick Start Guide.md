@@ -96,10 +96,6 @@ This guide provides a step-by-step walkthrough for getting you CORTX-S3 Server r
     java-1.8.0-openjdk-devel-1.8.0.292.b10-1.el7_9.x86_64
     ``` 
     
-10. You'll need to install CORTX Python Utilities. Follow the steps to install [CORTX Python Utilities](https://github.com/Seagate/cortx-utils/blob/main/py-utils/README.md).
-
-11. You'll need to install Kafka Server. Follow the steps to install [Kafka Server](https://github.com/Seagate/cortx-utils/wiki/Kafka-Server-Setup).
-
 
 All done! You are now ready for cloning the CORTX-S3 Server repository.
 
@@ -119,15 +115,7 @@ $ git submodule update --init --recursive && git status
 
 **Before you begin**
 
-1. Create Message bus configuration file and Kafka topic for messaging:
-
-```shell
-
-$ mkdir -p /etc/cortx
-$ cp scripts/kafka/message_bus.conf /etc/cortx/
-$ sh scripts/kafka/create-topic.sh -c 1 -i <Hostname/FQDN>
-```
-2. Run the command:
+Run the command:
 
 ```shell
 
