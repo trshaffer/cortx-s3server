@@ -377,6 +377,7 @@ Refer to our [CORTX Contribution Guide](https://github.com/Seagate/cortx/blob/ma
 Please refer to the [Support](https://github.com/Seagate/cortx/blob/main/SUPPORT.md) section to reach out to us with your questions, contributions, and feedback.
 
 Tested by:
+- Oct 14, 2021: Tim Shaffer (tim.shaffer@seagate.com), tested aade9a on Centos 7.9
 - Oct 7, 2021: Justin Woo (justin.woo@seagate.com), tested CentOS Linux release 7.9.2009 (Core)
 - Sep 03, 2021: Sanal Kaarthikeyan (sanal.kaarthikeyan@segate.com), tested CentOS Linux release 7.9.2009 (Core)
                 verified with git #948f22cc07955bf5c1d6ec77c3a7ec2da6933251 on main branch
