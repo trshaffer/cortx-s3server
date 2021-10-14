@@ -132,7 +132,7 @@ $ sh scripts/kafka/create-topic.sh -c 1 -i <Hostname/FQDN>
 ```shell
 
    $ cd ./scripts/env/dev
-   $ ./init.sh -a
+   $ ./init.sh
 ```
 
 At some point during the execution of the `init.sh` script, it will prompt for the following passwords. Enter them as mentioned below:
