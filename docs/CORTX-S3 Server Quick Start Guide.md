@@ -54,8 +54,13 @@ This guide provides a step-by-step walkthrough for getting you CORTX-S3 Server r
         * `$ yum install -y epel-release`
     * Ansible: Install ansible if not there already `$ yum install -y ansible`
     * ipaddress: Install ipaddress if not there already `$ pip3 install ipaddress`
-    * Make sure that PATH variable has `/usr/local/sbin`,`/usr/sbin`,`/usr/bin`, `/usr/local/bin` directories. You can check your PATH variable by running `echo $PATH`
-    
+    * Make sure that PATH variable has `/usr/local/sbin`,`/usr/sbin`,`/usr/bin`, `/usr/local/bin` directories. You can check your PATH variable by running `echo $PATH`.
+      To avoid issues with tests later, ensure that `/usr/local/bin` comes after `/bin`.
+      The AWS CLI tools are installed via both `yum` and `pip3`.
+      The test cases during the build phase require the `yum` version (installed in `/bin`),
+      while the command line tests later need the `pip3` one (installed in `/usr/local/bin`).
+
+
 6. You will need to set your hostname to something other than localhost `hostnamectl set-hostname --static --transient --pretty <new-name>`. Try `sudo' if the command fails
 
 7. Add/set entry corresponding to <new-name> in above command to `/etc/hosts` file
@@ -95,7 +100,11 @@ This guide provides a step-by-step walkthrough for getting you CORTX-S3 Server r
     java-1.8.0-openjdk-headless-1.8.0.292.b10-1.el7_9.x86_64
     java-1.8.0-openjdk-devel-1.8.0.292.b10-1.el7_9.x86_64
     ``` 
-    
+
+10. Ensure that your user account does not have AWS CLI configured.
+    Some of the tests are sensitive to the `~/.aws/` directory,
+    so if this directory exists, you should temporarily move it somewhere else
+    (e.g. `~/.aws.bak/`) while building and/or running tests.
 
 All done! You are now ready for cloning the CORTX-S3 Server repository.
 
@@ -176,11 +185,12 @@ Before your test your build, ensure that you have installed and configured the f
 1. Make sure you have installed easy_install.
     - To check if you have easy_install, run the command: `$ easy_install --version`
     - To install easy_install, run the command: `$ yum install python-setuptools python-setuptools-devel`
-2. Ensure you've installed pip.
-    - To check if you have pip installed, run the command: `$ pip --version`
-    - To install pip, run the command: `$ easy_install pip`
-3. If you don't have Python Version 2.6.5+, install Python using: `$ yum install python`
+2. If you don't have Python Version 2.6.5+, install Python using: `$ yum install python`
     - If you don't have Python Version 3.3, then install python3 using: `$ yum install python3`
+3. Ensure you've installed pip3.
+    - To check if you have pip3 installed, run the command: `$ pip3 --version`
+    - This should have been installed already with Python 3.
+      If not, you can run `yum install python3-pip`.
 4. Ensure that CORTX-S3 Server and its dependent services are running.
     1. To start CORTX-S3 Server and its dependent services, run the command: `$ ./jenkins-build.sh --skip_build --skip_tests`
        
@@ -192,9 +202,6 @@ Before your test your build, ensure that you have installed and configured the f
 5. Follow these steps to install the AWS client and plugin:
     1. To install the AWS client, use: `$ pip3 install awscli`
     2. To install the AWS plugin, use: `$ pip3 install awscli-plugin-endpoint`
-    
-    Note: If we install awscli on s3 development environment using pip3 then Jenkins system tests will break due to version dependancy conflict in s3iamcli. Fix for this is in progress.
-    
     3. Generate the AWS Access Key ID and Secret Key:
          1. To check for help messages, use: `$ s3iamcli -h`
          2. To create a new User, run: `$ s3iamcli CreateAccount -n <Account Name> -e <Email Id>`
@@ -204,16 +211,19 @@ Before your test your build, ensure that you have installed and configured the f
               * Running the above command lists details of the newly created user including the `aws Access Key ID` and the `aws Secret Key`
               * Copy and save the Access and Secret Keys for the new user.
 
-6. To Configure AWS run the following commands:
-   
+6. The AWS CLI setup requires a slightly different environment than the build setup
+   (see notes above about setting `$PATH` and the `~/.aws/` directory).
+   Ideally, you can run the rest of these CLI testing steps under another user.
+   This will allow you configure AWS CLI and `$PATH` independently of the build environment.
+   If this is not possible, you can temporarily rename `~/.aws/` and change `$PATH` in another shell.
+   Ensure that `/usr/local/bin` comes before `/bin` in your `$PATH` so that the `aws` commands below run under Python 3 and are provided by `pip3`.
+
    1.  Run `$ aws configure` and enter the following details:
         * `AWS Access Key ID [None]: <Access Key generated in last step>`
         * `AWS Secret Access Key [None]: <Secret Key generated in last step>`
         * `Default region name [None]: US`
         * `Default output format [None]: text`
-   2. Install the `awscli_plugin_endpoint` package if it's not installed:
-        `$ pip install awscli-plugin-endpoint`
-   3. Configure the AWS Plugin Endpoint using:
+   2. Configure the AWS Plugin Endpoint using:
       `$ aws configure set plugins.endpoint awscli_plugin_endpoint`
         - To configure AWS in SSL mode run:
             `$ aws configure set s3.endpoint_url https://s3.seagate.com`
@@ -221,7 +231,7 @@ Before your test your build, ensure that you have installed and configured the f
         - To configure AWS in non-SSL mode, please run:
             `$ aws configure set s3.endpoint_url http://s3.seagate.com`
             `$ aws configure set s3api.endpoint_url http://s3.seagate.com`
-   4. Run the following command to view the contents of your AWS config file: 
+   3. Run the following command to view the contents of your AWS config file: 
       `$ cat ~/.aws/config`
       
       1. For AWS in SSL mode, you'll need to configure the `[default]` section with the `ca_bundle=<path to ca.crt file>` parameter.
@@ -254,7 +264,7 @@ Before your test your build, ensure that you have installed and configured the f
         endpoint = awscli_plugin_endpoint
       ```
 
-    4. Ensure that your AWS credential file contains your Access Key Id and Secret Key by using: `$ cat ~/.aws/credentials`
+   4. Ensure that your AWS credential file contains your Access Key Id and Secret Key by using: `$ cat ~/.aws/credentials`
 
 **Procedure**
 
@@ -295,6 +305,9 @@ Run the following test cases to check if your AWS S3 Server build is working cor
 7. To Remove Bucket, use:
 
     `$ aws s3 rb s3://seagatebucket`
+
+You can now switch back to root,
+or close the shell with the modified `$PATH` and change your AWS config back.
 
 ### 1.5 Test a Specific MOTR Version using CORX-S3 Server
 
